@@ -1,13 +1,18 @@
 package com.xuecheng.manage_cms.service;
 
 
+import com.xuecheng.framework.domain.cms.CmsConfig;
 import com.xuecheng.framework.domain.cms.CmsPage;
 import com.xuecheng.framework.domain.cms.request.QueryPageRequest;
+import com.xuecheng.framework.domain.cms.response.CmsCode;
 import com.xuecheng.framework.domain.cms.response.CmsPageResult;
+import com.xuecheng.framework.exception.CustomerException;
+import com.xuecheng.framework.exception.ExceptionCast;
 import com.xuecheng.framework.model.response.CommonCode;
 import com.xuecheng.framework.model.response.QueryResponseResult;
 import com.xuecheng.framework.model.response.QueryResult;
 import com.xuecheng.framework.model.response.ResponseResult;
+import com.xuecheng.manage_cms.dao.CmsConfigRepository;
 import com.xuecheng.manage_cms.dao.CmsPageRepository;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,6 +30,9 @@ import java.util.Optional;
 public class CmsPageService {
     @Autowired
     private CmsPageRepository cmsPageRepository;
+
+    @Autowired
+    private CmsConfigRepository cmsConfigRepository;
 
 
     public QueryResponseResult findList( Integer page,  Integer size, QueryPageRequest request){
@@ -74,17 +82,28 @@ public class CmsPageService {
 
 
     public CmsPageResult add(CmsPage cmsPage) {
+        if (cmsPage == null) {
+            //抛出 非法参数异常
+
+        }
+
 
         CmsPage pageFind = cmsPageRepository.findBySiteIdAndPageNameAndPageWebPath(cmsPage.getSiteId(), cmsPage.getPageName(), cmsPage.getPageWebPath());
+        if (pageFind != null) {
+            // 已存在 抛出异常
+            //throw new CustomerException(CommonCode.FAIL);
+            ExceptionCast.cast(CmsCode.CMS_ADDPAGE_EXISTSNAME);
+        }
 
-        if (pageFind == null) {
+
+
             // 数据库不存在 则 插入
             cmsPage.setPageId(null);
             CmsPage pageSave = cmsPageRepository.save(cmsPage);
             return new CmsPageResult(CommonCode.SUCCESS, cmsPage);
-        }
 
-        return new CmsPageResult(CommonCode.FAIL, null);
+
+
     }
 
 
@@ -127,4 +146,19 @@ public class CmsPageService {
         }
         return new ResponseResult(CommonCode.FAIL);
     }
+
+    /**
+     * 通过 id  查询 轮播图 数据库 内容     *
+     */
+    public CmsConfig getConfigById(String id) {
+        Optional<CmsConfig> cmsConfig = cmsConfigRepository.findById(id);
+        if (cmsConfig.isPresent()) {
+            CmsConfig cmsConfig1 = cmsConfig.get();
+            return cmsConfig1;
+        }
+
+        return  null;
+
+    }
+
 }
