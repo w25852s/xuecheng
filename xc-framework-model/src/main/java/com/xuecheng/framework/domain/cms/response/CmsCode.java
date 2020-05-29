@@ -10,11 +10,14 @@ import lombok.ToString;
 public enum CmsCode implements ResultCode {
     CMS_ADDPAGE_EXISTSNAME(false,24001,"页面名称已存在！"),
     CMS_GENERATEHTML_DATAURLISNULL(false,24002,"从页面信息中找不到获取数据的url！"),
+    CMS_GENERATEHTML_TEMPLATEISNULL(false,24002,"从页面信息中找不到获取模板的的模板ID！"),
     CMS_GENERATEHTML_DATAISNULL(false,24003,"根据页面的数据url获取不到数据！"),
-    CMS_GENERATEHTML_TEMPLATEISNULL(false,24004,"页面模板为空！"),
-    CMS_GENERATEHTML_HTMLISNULL(false,24005,"生成的静态html为空！"),
+    CMS_GENERATEHTML_HTMLISNULL(false,24004,"生成的静态html为空！"),
     CMS_GENERATEHTML_SAVEHTMLERROR(false,24005,"保存静态html出错！"),
-    CMS_COURSE_PERVIEWISNULL(false,24007,"预览页面为空！");
+    CMS_PAGENOTEXISTS(false,24006,"找不到CmsPage！"),
+    CMS_TEMPLATENOTEXISTS(false,24008,"找不到CmsTemplate！"),
+    CMS_COURSE_PERVIEWISNULL(false,24007,"预览页面为空！"),
+    CMS_FILEDNOTEXISTS(false,24009,"没有找到GridFsFile！");
     //操作代码
     boolean success;
     //操作代码
