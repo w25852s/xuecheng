@@ -1,6 +1,7 @@
 package com.xuecheng.manage_cms.service;
 
 
+import com.alibaba.fastjson.JSON;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSDownloadStream;
 import com.mongodb.client.gridfs.model.GridFSFile;
@@ -15,6 +16,7 @@ import com.xuecheng.framework.model.response.CommonCode;
 import com.xuecheng.framework.model.response.QueryResponseResult;
 import com.xuecheng.framework.model.response.QueryResult;
 import com.xuecheng.framework.model.response.ResponseResult;
+import com.xuecheng.manage_cms.conf.CmsClientConfig;
 import com.xuecheng.manage_cms.dao.CmsConfigRepository;
 import com.xuecheng.manage_cms.dao.CmsPageRepository;
 import com.xuecheng.manage_cms.dao.CmsTemplateRepository;
@@ -25,6 +27,8 @@ import freemarker.template.Template;
 import io.netty.util.internal.StringUtil;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.bson.types.ObjectId;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;
@@ -40,6 +44,8 @@ import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
@@ -62,6 +68,12 @@ public class CmsPageService {
 
     @Autowired
     private CmsTemplateRepository templateRepository;
+
+    @Autowired
+    private RabbitTemplate rabbitTemplate;
+
+    @Autowired
+    private CmsClientConfig cmsClientConfig;
 
 
     public QueryResponseResult findList( Integer page,  Integer size, QueryPageRequest request){
@@ -265,6 +277,40 @@ public class CmsPageService {
         return null;
 
     }
+
+    //发送页面的方法
+    public ResponseResult postPage(String pageId) {
+        //1、首先 要将 页面 持久化到 GridFs中
+        //1.1、 获得 页面 字符串
+        String templateHtml = this.getTemplateHtml(pageId);
+
+        try {
+            //1.2将页面 存储到 GridFs 文件系统
+            CmsPage cmsPage = this.findById(pageId);
+            if (cmsPage == null) {
+                ExceptionCast.cast(CmsCode.CMS_PAGENOTEXISTS);
+
+            }
+            InputStream inputStream = IOUtils.toInputStream(templateHtml, "utf-8");
+            ObjectId objectId = gridFsTemplate.store(inputStream, cmsPage.getPageName());
+
+            cmsPage.setHtmlFileId(objectId.toString());
+            // 将文件的 id 更新到 CmsPage 当中
+            cmsPageRepository.save(cmsPage);
+            //  向消息队列 发消息 让 各个站点 来 从GridFs下载页面
+            Map<Object, Object> map = new HashMap<>();
+            map.put("pageId", cmsPage.getPageId());
+            String jsonString = JSON.toJSONString(map);
+            rabbitTemplate.convertAndSend(cmsClientConfig.getExchangeName(),cmsPage.getSiteId(),jsonString);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return ResponseResult.FAIL();
+        }
+
+        return ResponseResult.SUCCESS();
+
+    }
+
 
 
     //根据pageId 获取page

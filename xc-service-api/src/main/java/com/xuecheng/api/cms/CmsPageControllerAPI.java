@@ -29,4 +29,7 @@ public QueryResponseResult findList(Integer page, Integer size, QueryPageRequest
 
     @ApiOperation("删除CmsPage")
     public ResponseResult delete(String id);
+
+    @ApiOperation("页面持久话到 GridFs当中 并 通过rabbitmq 消息队列  发送消息 来进行 从 GridFs 中下载 页面")
+    public ResponseResult postPage(String pageId);
 }
