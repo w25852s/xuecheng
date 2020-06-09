@@ -19,7 +19,8 @@ public enum CourseCode implements ResultCode {
     COURSE_MEDIS_URLISNULL(false,31101,"选择的媒资文件访问地址为空！"),
     COURSE_MEDIS_NAMEISNULL(false,31102,"选择的媒资文件名称为空！"),
     COURSE_NOTEXISTS(false,31103,"课程未找到！"),
-    COURSE_INVIADPARAM(false,31104,"课程参数有误！");
+    COURSE_INVIADPARAM(false,31104,"课程参数有误！"),
+    SUCCESS(true,200,"查询到结果");
 
     //操作代码
     @ApiModelProperty(value = "操作是否成功", example = "true", required = true)
